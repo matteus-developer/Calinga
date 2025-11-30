@@ -23,4 +23,26 @@ public class WebConfig implements WebMvcConfigurer {
         registration.setOrder(1); 
         return registration;
     }
+
+     @Bean
+    public FilterRegistrationBean<SessionFilter> sessionFilterRegistration() {
+        FilterRegistrationBean<SessionFilter> registration = new FilterRegistrationBean<>();
+        registration.setFilter(new SessionFilter());
+        registration.addUrlPatterns("/*");
+        
+        // Ordem 1: Autenticação (deve vir primeiro)
+        registration.setOrder(1); 
+        return registration;
+    }
+
+    @Bean
+    public FilterRegistrationBean<AuthorizationFilter> authorizationFilterRegistration() {
+        FilterRegistrationBean<AuthorizationFilter> registration = new FilterRegistrationBean<>();
+        registration.setFilter(new AuthorizationFilter());
+        registration.addUrlPatterns("/*");
+        
+        // Ordem 2: Autorização (deve vir depois da autenticação)
+        registration.setOrder(2); 
+        return registration;
+    }
 }
