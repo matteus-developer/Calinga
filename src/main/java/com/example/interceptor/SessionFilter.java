@@ -15,9 +15,7 @@ public class SessionFilter implements Filter {
         "/", 
         "/tela/login", 
         "/login", // Necessário para o POST do formulário
-        "/tela/acesso-negado",
-        "/tela/recuperarSenha",
-        "/tela/nova-senha"
+        "/tela/acesso-negado"
     );
 
     @Override
