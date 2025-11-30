@@ -1,43 +1,11 @@
 <!DOCTYPE html>
-<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Alterar Senha</title>
-    <link rel="stylesheet" href="/css/nova-senha.css">
-    <script src="/js/alterar-senha.js" defer></script>
+    <title>Teste Simples</title>
 </head>
 <body>
-
-<main class="login-wrapper">
-    <section class="login-card glass-morphism">
-        <h2 class="card-title" >Definir Nova Senha</h2>
-
-        <div th:if="${erro}" class="erro-msg" role="alert">
-            <p th:text="${erro}"></p>
-        </div>
-
-        <form action="/alterar-senha" method="POST">
-            <!-- ID passado pelo controller -->
-            <input type="hidden" name="idProfessor" th:value="${idProfessor}">
-
-            <div class="input-group">
-                <label class="input-label" for="senha">Nova Senha</label>
-                <input type="password" id="senha" name="senha" required placeholder="Digite a nova senha" class="form-input">
-            </div>
-
-            <div class="input-group">
-                <label class="input-label" for="confirmar">Confirmar Senha</label>
-                <input type="password" id="confirmar" name="confirmar" required placeholder="Confirme a nova senha" class="form-input">
-            </div>
-
-            <button class="submit-button complex-btn">Salvar</button>
-        </form>
-
-        <div class="extra-links">
-            <a href="/tela/login" class="link">Voltar ao login</a>
-        </div>
-    </section>
-</main>
-
+    <h1>SE ISSO APARECER, O CAMINHO ESTÁ CORRETO!</h1>
+    <p>ID Recebido: <span th:text="${idProfessor}">12345</span></p>
+    <p>O problema pode estar no CSS, JS ou em alguma outra tag complexa do Thymeleaf.</p>
 </body>
 </html>
