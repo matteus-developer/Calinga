@@ -55,18 +55,7 @@ public class PagesController {
     @GetMapping("/tela/prova")
     public String mostrarTelaProva() {
         return "htmlGerarProva/gerarProva"; 
-    }
-    
-    @GetMapping("/tela/recuperarSenha")
-    public String mostrarTelaRecuperarSenha() {
-        return "htmlRecuperarSenha/recuperarSenha"; 
-    }
-    
-    @GetMapping("/tela/nova-senha")
-    public String mostrarTelaNovaSenha() {
-        return "htmlRecuperarSenha/nova-senha"; 
-    }
-    
+    }  
   //Direciona para tela de acesso negado
   		@GetMapping("/tela/acesso-negado")
   		public String mostrarTelaAcessoNegado() {
