@@ -28,13 +28,21 @@ public class Professor {
     @Column(name = "tipoProfessor", columnDefinition = "TINYINT")
     private byte tipoProfessor; // 0, 1, 2, etc.
 
-    @ManyToMany
+    //@ManyToMany
+    //@JoinTable(
+   //     name = "professordisciplina", // nome da tabela intermediária
+    //    joinColumns = @JoinColumn(name = "idProfessor"), // FK do professor
+     //   inverseJoinColumns = @JoinColumn(name = "idDisciplina") // FK da disciplina
+    //)
+    //private List<Disciplina> disciplinas = new ArrayList<>();
+
+    @ManyToMany(fetch = FetchType.EAGER) // ADICIONE FETCHTYPE.EAGER
     @JoinTable(
-        name = "professordisciplina", // nome da tabela intermediária
-        joinColumns = @JoinColumn(name = "idProfessor"), // FK do professor
-        inverseJoinColumns = @JoinColumn(name = "idDisciplina") // FK da disciplina
-    )
-    private List<Disciplina> disciplinas = new ArrayList<>();
+    name = "professordisciplina", 
+    joinColumns = @JoinColumn(name = "idProfessor"), 
+    inverseJoinColumns = @JoinColumn(name = "idDisciplina") 
+)
+private List<Disciplina> disciplinas = new ArrayList<>();
 
     public Professor() {
         super();
