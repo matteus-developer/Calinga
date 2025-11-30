@@ -8,8 +8,10 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 
 @Entity
+@Table(name="questao")
 public class Questao {
 
 	@Id @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,20 +22,24 @@ public class Questao {
     @JoinColumn(name = "idDisciplina", insertable = false, updatable = false)
     private Disciplina disciplina;
 	
+	@Column(name = "idDisciplina")
 	private int idDisciplina;
+
+	@Column(name = "idProfessor" , length = 2000)
 	private int idProfessor;
-	@Column(length = 2000) // <-- define o tamanho para 2000
+	@Column(name = "textQuestao" , length = 2000) // <-- define o tamanho para 2000
 	private String textQuestao;
-	 @Column(length = 2000) // <-- define o tamanho para 2000
+	 @Column(name = "alterA" , length = 2000) // <-- define o tamanho para 2000
 	private String alterA;
-	 @Column(length = 2000) // <-- define o tamanho para 2000
+	@Column(name = "alterB" , length = 2000)
 	private String alterB;
-	 @Column(length = 2000) // <-- define o tamanho para 2000
+	 @Column(name = "alterC" , length = 2000)
 	private String alterC;
-	 @Column(length = 2000) // <-- define o tamanho para 2000
+	 @Column(name = "alterD" , length = 2000)
 	private String alterD;
-	 @Column(length = 2000) // <-- define o tamanho para 2000
+	 @Column(name = "alterE" , length = 2000)
 	private String alterE;
+	@Column(name = "resposta")
 	private String resposta;
 	
 	public Questao() {
