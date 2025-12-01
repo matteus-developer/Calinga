@@ -20,7 +20,7 @@ public class Professor {
 
     @Id 
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "idProfessor")  // coluna do Railway
+    @Column(name = "idProfessor") // coluna do Railway
     private int idProfessor;
 
     @Column(name = "nomeProfessor") // <-- obrigatório no Railway
@@ -109,5 +109,11 @@ public class Professor {
     public void setDisciplinas(List<Disciplina> disciplinas) {
         this.disciplinas = disciplinas;
     }
-}
 
+    /**
+     * Verifica se o professor é um Coordenador.
+     */
+    public boolean isCoordenador() {
+        return this.tipoProfessor == 1; 
+    }
+}
