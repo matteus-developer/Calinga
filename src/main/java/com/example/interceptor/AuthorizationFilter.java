@@ -1,54 +1,54 @@
 package com.example.filter;
 
-import com.example.model.Professor; // Assumindo que seu modelo Professor está aqui
+import com.example.model.Professor;
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Component;
+
 import java.io.IOException;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
-public class AuthorizationFilter implements Filter {
-
-    // Lista das rotas exclusivas do Coordenador (ex: Gerenciar Professores)
-    private static final List<String> COORDINATOR_ROUTES = Arrays.asList(
-        "/tela/professor",       // Assumindo que gerenciar professores está nesta rota
-        "/tela/disciplina"     // Se tiver uma tela específica de dashboard do coordenador
-    );
+// Importante: Transformar em um componente para que o Spring Security possa injetar
+@Component
+public class AuthorizationFilter extends GenericFilter {
 
     @Override
-    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) 
+    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
         throws IOException, ServletException {
-        
+
         HttpServletRequest req = (HttpServletRequest) request;
-        HttpServletResponse res = (HttpServletResponse) response;
-        String uri = req.getRequestURI();
-        
-        // Se a URI não for uma rota de Coordenador, continua o processamento
-        if (COORDINATOR_ROUTES.stream().noneMatch(uri::startsWith)) {
-            chain.doFilter(request, response);
-            return;
-        }
-
-        // --- Checagem de Autorização para Rotas Restritas ---
         HttpSession session = req.getSession(false);
-        Professor professorLogado = (Professor) session.getAttribute("professorLogado"); 
 
-        // O SessionFilter garante que professorLogado não é nulo.
-        // Se o professor NÃO for Coordenador, bloqueia.
-        if (professorLogado != null && !professorLogado.isCoordenador()) {
+        // 1. Tenta recuperar o professor logado da sessão
+        Professor professorLogado = (Professor) (session != null ? session.getAttribute("professorLogado") : null);
+
+        // 2. Se o professor estiver logado na sessão, autentica no Spring Security
+        if (professorLogado != null) {
+            // Define o TipoProfessor como a Role (Ex: "COORDENADOR" ou "PROFESSOR")
+            String tipo = professorLogado.getTipoProfessor().toUpperCase(); 
             
-            // É CRUCIAL REDIRECIONAR PARA UMA PÁGINA QUE O PROFESSOR TEM ACESSO
-            // NUNCA REDIRECIONE PARA UMA PÁGINA DE ERRO SE VOCÊ QUER EVITAR BYPASS DE URL.
-            System.out.println("BLOQUEIO DE AUTORIZAÇÃO: Professor tentou acessar rota restrita. URI: " + uri);
-            
-            // Redireciona para a página inicial segura do Professor
-            res.sendRedirect(req.getContextPath() + "/tela/menu"); // Redireciona para a tela inicial do Professor
-            return; // Interrompe o processamento
+            // CONVENÇÃO DO SPRING SECURITY: A Role deve ter o prefixo "ROLE_"
+            List<SimpleGrantedAuthority> authorities = Collections.singletonList(
+                new SimpleGrantedAuthority("ROLE_" + tipo)
+            );
+
+            // Cria o objeto de autenticação do Spring Security
+            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                professorLogado.getEmailProfessor(), // Principal (Email ou Matrícula)
+                null, 
+                authorities // Autoridades (Roles)
+            );
+
+            // Coloca a autenticação no contexto de segurança para que o SecurityConfig use hasRole()
+            SecurityContextHolder.getContext().setAuthentication(authentication);
         }
 
-        // Se o professor for o Coordenador ou tiver permissão, continua
+        // Continua o processamento da cadeia de filtros
         chain.doFilter(request, response);
     }
 }
