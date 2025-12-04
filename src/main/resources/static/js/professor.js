@@ -226,7 +226,7 @@ document.querySelector("#btnAtualizar").addEventListener("click", function () {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(dto)
     })
-    ..then(res => {
+    .then(res => {
     if (res.status === 200 || res.status === 204) {
         alert("Professor atualizado!");
         document.querySelector("#modalEditar").style.display = "none";
