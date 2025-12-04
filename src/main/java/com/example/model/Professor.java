@@ -2,7 +2,9 @@ package com.example.model;
 
 import java.util.ArrayList;
 import java.util.List;
-
+import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import java.io.Serializable;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
