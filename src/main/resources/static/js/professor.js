@@ -10,10 +10,25 @@ const idTipoProfessor = document.querySelector("#idTipoProfessor");
 const tabelaBody = document.querySelector("#tableDisciplina tbody");
 
 // =============================
+// LIMPAR CAMPOS DO FORMULÁRIO
+// =============================
+function limparCamposProfessor() {
+    idNomeProfessor.value = "";
+    idEmailProfessor.value = "";
+    idSenhaProfessor.value = "";
+    idMatriProfessor.value = "";
+    idTipoProfessor.value = "";
+    
+    // Desmarca todos os checkboxes
+    document.querySelectorAll(".check-disciplina").forEach(cb => {
+        cb.checked = false;
+    });
+}
+
+// =============================
 // SALVAR PROFESSOR
 // =============================
 function salvarProfessor() {
-
     if (!idNomeProfessor.value || !idEmailProfessor.value || 
         !idSenhaProfessor.value || !idMatriProfessor.value || 
         !idTipoProfessor.value) {
@@ -24,10 +39,10 @@ function salvarProfessor() {
     const tipo = parseInt(idTipoProfessor.value);
 
     if (tipo === 1) {
+        // Coordenador: associa todas as disciplinas
         fetch("/disciplina/list")
             .then(res => res.json())
             .then(disciplinas => {
-
                 const idsDisciplinas = disciplinas.map(d => d.idDisciplina);
 
                 const dto = {
@@ -40,9 +55,14 @@ function salvarProfessor() {
                 };
 
                 enviarProfessor(dto);
+            })
+            .catch(err => {
+                console.error("Erro ao buscar disciplinas:", err);
+                alert("Erro ao buscar disciplinas");
             });
 
     } else {
+        // Professor: pega apenas as disciplinas selecionadas
         const idsDisciplinas = [...document.querySelectorAll(".check-disciplina:checked")]
             .map(c => parseInt(c.value));
 
@@ -66,15 +86,22 @@ function enviarProfessor(dto) {
         body: JSON.stringify(dto)
     })
     .then(res => {
-        if (!res.ok) throw new Error("Erro ao salvar");
+        if (!res.ok) {
+            return res.text().then(msg => {
+                throw new Error(msg || "Erro ao salvar professor");
+            });
+        }
         return res.json();
     })
     .then(() => {
-        alert("Professor salvo!");
+        alert("Professor salvo com sucesso!");
         limparCamposProfessor();
         listarProfessores();
     })
-    .catch(err => console.error(err));
+    .catch(err => {
+        console.error("Erro ao salvar:", err);
+        alert(err.message);
+    });
 }
 
 // =============================
@@ -82,7 +109,10 @@ function enviarProfessor(dto) {
 // =============================
 function listarDisciplinas() {
     fetch("/disciplina/list")
-        .then(res => res.json())
+        .then(res => {
+            if (!res.ok) throw new Error("Erro ao carregar disciplinas");
+            return res.json();
+        })
         .then(disciplinas => {
             tabelaBody.innerHTML = "";
 
@@ -97,53 +127,68 @@ function listarDisciplinas() {
                 `;
                 tabelaBody.appendChild(linha);
             });
+        })
+        .catch(err => {
+            console.error("Erro ao listar disciplinas:", err);
+            alert("Erro ao carregar lista de disciplinas");
         });
 }
 
 // =============================
 // LISTAR PROFESSORES
 // =============================
-// professor.js (Aplique esta correção)
 function listarProfessores() {
-    // 1. A URL é correta (fetch("/professor/list"))
     fetch("/professor/list")
         .then(res => {
-            if (!res.ok) { // Verifica se o status é 200-299 (ou se houve falha de segurança/rede)
-                throw new Error("Falha ao carregar lista de professores. Status: " + res.status);
+            if (!res.ok) {
+                throw new Error("Erro ao carregar professores. Status: " + res.status);
             }
             return res.json();
         })
         .then(prof => {
-            // 2. ADICIONE UM LOG AQUI para ter certeza que o JSON está chegando
-            console.log("Dados de Professores recebidos:", prof); 
+            console.log("Professores recebidos:", prof);
 
             const tbody = document.querySelector("#tableProfessor tbody");
             tbody.innerHTML = "";
 
-            // 3. Verifique se 'prof' é uma array antes de iterar
-            if (Array.isArray(prof)) {
+            if (Array.isArray(prof) && prof.length > 0) {
                 prof.forEach(p => {
                     const tipoTexto = p.tipoProfessor === 1 ? "Coordenador" : "Professor";
+
                     const linha = document.createElement("tr");
-                    linha.innerHTML = `
-                        <td>${p.idProfessor}</td>
-                        <td>${p.nomeProfessor}</td>
-                        <td>${p.matriProfessor}</td>
-                        <td>${tipoTexto}</td>
-                        <td>
-                            <button class="btn-editar" data-id="${p.idProfessor}">Editar</button>
-                            <button class="btn-excluir" data-id="${p.idProfessor}">Excluir</button>
-                        </td>
-                    `;
+                    
+                    // Se for coordenador, mostra botões de ação
+                    if (typeof IS_COORDENADOR !== 'undefined' && IS_COORDENADOR) {
+                        linha.innerHTML = `
+                            <td>${p.idProfessor}</td>
+                            <td>${p.nomeProfessor}</td>
+                            <td>${p.matriProfessor}</td>
+                            <td>${tipoTexto}</td>
+                            <td>
+                                <button class="btn-editar" data-id="${p.idProfessor}">Editar</button>
+                                <button class="btn-excluir" data-id="${p.idProfessor}">Excluir</button>
+                            </td>
+                        `;
+                    } else {
+                        linha.innerHTML = `
+                            <td>${p.idProfessor}</td>
+                            <td>${p.nomeProfessor}</td>
+                            <td>${p.matriProfessor}</td>
+                            <td>${tipoTexto}</td>
+                        `;
+                    }
+
                     tbody.appendChild(linha);
                 });
             } else {
-                console.error("Dados de professores não são uma lista:", prof);
+                const linha = document.createElement("tr");
+                linha.innerHTML = `<td colspan="5" style="text-align:center">Nenhum professor cadastrado</td>`;
+                tbody.appendChild(linha);
             }
         })
         .catch(err => {
-            // 4. Se a requisição falhar, você verá o erro no console
-            console.error("Erro na requisição /professor/list:", err); 
+            console.error("Erro ao listar professores:", err);
+            alert("Erro ao carregar lista de professores: " + err.message);
         });
 }
 
@@ -151,31 +196,29 @@ function listarProfessores() {
 // ABRIR MODAL EDITAR
 // =============================
 document.addEventListener("click", function (e) {
-
     if (e.target.classList.contains("btn-editar")) {
-
         const id = e.target.dataset.id;
 
         fetch(`/professor/${id}`)
-            .then(res => res.json())
+            .then(res => {
+                if (!res.ok) throw new Error("Erro ao buscar professor");
+                return res.json();
+            })
             .then(professor => {
-
                 document.querySelector("#editIdProfessor").value = professor.idProfessor;
                 document.querySelector("#editNomeProfessor").value = professor.nomeProfessor;
                 document.querySelector("#editEmailProfessor").value = professor.emailProfessor;
-                document.querySelector("#editSenhaProfessor").value = professor.senhaProfessor;
+                document.querySelector("#editSenhaProfessor").value = "";
                 document.querySelector("#editMatriProfessor").value = professor.matriProfessor;
                 document.querySelector("#editTipoProfessor").value = professor.tipoProfessor;
 
-                fetch("/disciplina/list")
+                return fetch("/disciplina/list")
                     .then(res => res.json())
                     .then(disciplinas => {
-
                         const container = document.querySelector("#editListaDisciplinas");
                         container.innerHTML = "";
 
                         disciplinas.forEach(d => {
-
                             const checked = professor.disciplinas.some(pd => 
                                 pd.idDisciplina === d.idDisciplina
                             );
@@ -183,8 +226,8 @@ document.addEventListener("click", function (e) {
                             const div = document.createElement("div");
                             div.innerHTML = `
                                 <label>
-                                    <input type="checkbox" class="edit-check-disciplina" value="${d.idDisciplina}"
-                                    ${checked ? "checked" : ""}>
+                                    <input type="checkbox" class="edit-check-disciplina" 
+                                           value="${d.idDisciplina}" ${checked ? "checked" : ""}>
                                     ${d.nomeDisciplina}
                                 </label>
                             `;
@@ -193,15 +236,18 @@ document.addEventListener("click", function (e) {
 
                         document.querySelector("#modalEditar").style.display = "flex";
                     });
+            })
+            .catch(err => {
+                console.error("Erro ao abrir modal:", err);
+                alert("Erro ao carregar dados do professor");
             });
     }
 });
 
 // =============================
-// ATUALIZAR PROFESSOR 
+// ATUALIZAR PROFESSOR
 // =============================
 document.querySelector("#btnAtualizar").addEventListener("click", function () {
-
     const id = document.querySelector("#editIdProfessor").value;
 
     const idsDisciplinas = [...document.querySelectorAll(".edit-check-disciplina:checked")]
@@ -217,6 +263,7 @@ document.querySelector("#btnAtualizar").addEventListener("click", function () {
         idsDisciplinas
     };
 
+    // Só envia a senha se foi digitada
     if (senhaDigitada && senhaDigitada.trim() !== "") {
         dto.senhaProfessor = senhaDigitada;
     }
@@ -228,7 +275,7 @@ document.querySelector("#btnAtualizar").addEventListener("click", function () {
     })
     .then(res => {
         if (res.status === 200 || res.status === 204) {
-            alert("Professor atualizado!");
+            alert("Professor atualizado com sucesso!");
             document.querySelector("#modalEditar").style.display = "none";
             listarProfessores();
         } else {
@@ -238,27 +285,29 @@ document.querySelector("#btnAtualizar").addEventListener("click", function () {
         }
     })
     .catch(err => {
-        console.error(err);
+        console.error("Erro ao atualizar:", err);
         alert(err.message);
     });
-}); 
+}); // ✅ FECHAMENTO CORRETO DO addEventListener
+
 // =============================
 // EXCLUIR PROFESSOR
 // =============================
 document.addEventListener("click", function (e) {
-
     if (e.target.classList.contains("btn-excluir")) {
-
         const id = e.target.dataset.id;
 
-        if (confirm("Deseja excluir?")) {
+        if (confirm("Deseja realmente excluir este professor?")) {
             fetch(`/professor/excluir/${id}`, { method: "DELETE" })
                 .then(res => {
-                    if (!res.ok) throw new Error();
-                    alert("Excluído!");
+                    if (!res.ok) throw new Error("Erro ao excluir");
+                    alert("Professor excluído com sucesso!");
                     listarProfessores();
                 })
-                .catch(() => alert("Erro ao excluir"));
+                .catch(err => {
+                    console.error("Erro ao excluir:", err);
+                    alert("Erro ao excluir professor");
+                });
         }
     }
 });
@@ -271,18 +320,26 @@ document.querySelector("#btnCancelar").addEventListener("click", () => {
 });
 
 // =============================
+// BOTÃO VOLTAR
+// =============================
+const btnVoltar = document.getElementById("btnVoltar");
+if (btnVoltar) {
+    btnVoltar.addEventListener("click", () => {
+        window.location.href = "/menu";
+    });
+}
+
+// =============================
 // INICIALIZAÇÃO
 // =============================
-formProfessor.addEventListener("submit", e => {
-    e.preventDefault();
-    salvarProfessor();
-});
+if (formProfessor) {
+    formProfessor.addEventListener("submit", e => {
+        e.preventDefault();
+        salvarProfessor();
+    });
+}
 
 document.addEventListener("DOMContentLoaded", () => {
     listarDisciplinas();
     listarProfessores();
 });
-
-document.getElementById("btnVoltar").onclick = () => {
-    window.location.href = "/menu";
-};
