@@ -210,16 +210,20 @@ document.querySelector("#btnAtualizar").addEventListener("click", function () {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(dto)
     })
-    .then(res => {
-        if (!res.ok) throw new Error("Erro ao atualizar");
+    ..then(res => {
+    if (res.status === 200 || res.status === 204) {
         alert("Professor atualizado!");
         document.querySelector("#modalEditar").style.display = "none";
         listarProfessores();
-    })
-    .catch(err => {
-        console.error(err);
-        alert("Erro ao atualizar professor!");
-    });
+    } else {
+        return res.text().then(msg => {
+            throw new Error(msg || "Erro ao atualizar");
+        });
+    }
+})
+.catch(err => {
+    console.error(err);
+    alert(err.message);
 });
 
 // =============================
