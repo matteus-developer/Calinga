@@ -1,7 +1,8 @@
 package com.example.filter;
 
 import com.example.model.Professor;
-import jakarta.servlet.*;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -27,13 +28,13 @@ public class AuthorizationFilter extends OncePerRequestFilter {
         
         // Adicione LOGS para debug - REMOVA DEPOIS
         System.out.println("===========================================");
-        System.out.println("🔍 AuthorizationFilter executando");
-        System.out.println("📍 URI: " + uri);
-        System.out.println("🔧 Método: " + request.getMethod());
+        System.out.println("AuthorizationFilter executando");
+        System.out.println("URI: " + uri);
+        System.out.println("Método: " + request.getMethod());
         
         // Permite rotas públicas SEM verificar sessão
         if (isPublicRoute(uri)) {
-            System.out.println("✅ Rota pública - permitindo acesso");
+            System.out.println("Rota pública - permitindo acesso");
             filterChain.doFilter(request, response);
             return;
         }
@@ -42,7 +43,7 @@ public class AuthorizationFilter extends OncePerRequestFilter {
         HttpSession session = request.getSession(false);
         
         if (session == null) {
-            System.out.println("❌ Sessão não existe - redirecionando para login");
+            System.out.println("Sessão não existe - redirecionando para login");
             response.sendRedirect(request.getContextPath() + "/tela/login");
             return;
         }
@@ -51,7 +52,7 @@ public class AuthorizationFilter extends OncePerRequestFilter {
         Professor professorLogado = (Professor) session.getAttribute("professorLogado");
         
         if (professorLogado == null) {
-            System.out.println("❌ Professor não está na sessão - redirecionando para login");
+            System.out.println("Professor não está na sessão - redirecionando para login");
             response.sendRedirect(request.getContextPath() + "/tela/login");
             return;
         }
@@ -60,14 +61,14 @@ public class AuthorizationFilter extends OncePerRequestFilter {
         byte tipoByte = professorLogado.getTipoProfessor();
         String role = tipoByte == 1 ? "COORDENADOR" : "PROFESSOR";
         
-        System.out.println("👤 Professor logado: " + professorLogado.getEmailProfessor());
-        System.out.println("🎭 Tipo byte: " + tipoByte);
-        System.out.println("🎭 Role: " + role);
+        System.out.println("Professor logado: " + professorLogado.getEmailProfessor());
+        System.out.println("Tipo byte: " + tipoByte);
+        System.out.println("Role: " + role);
         
         // VERIFICAÇÃO CRÍTICA: Bloqueia professores em rotas de coordenador
-        if (isCoordenaorRoute(uri) && tipoByte != 1) {
-            System.out.println("🚫 BLOQUEADO: Professor tentando acessar rota de coordenador");
-            System.out.println("🚫 Tipo do usuário: " + tipoByte + " (esperado: 1)");
+        if (isCoordenaorRoute(uri, request.getMethod()) && tipoByte != 1) {
+            System.out.println("BLOQUEADO: Professor tentando acessar rota de coordenador");
+            System.out.println("Tipo do usuário: " + tipoByte + " (esperado: 1)");
             
             // Se for requisição AJAX/API, retorna JSON
             if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With")) || 
@@ -97,7 +98,7 @@ public class AuthorizationFilter extends OncePerRequestFilter {
         
         SecurityContextHolder.getContext().setAuthentication(authentication);
         
-        System.out.println("✅ Autenticação configurada - prosseguindo");
+        System.out.println("Autenticação configurada - prosseguindo");
         System.out.println("===========================================");
         
         // Continua o processamento
@@ -114,12 +115,16 @@ public class AuthorizationFilter extends OncePerRequestFilter {
                uri.startsWith("/images/");
     }
     
-    private boolean isCoordenaorRoute(String uri) {
-        // ADICIONE AQUI TODAS AS ROTAS QUE SÓ COORDENADORES PODEM ACESSAR
-        return uri.equals("/professor/salvar") ||
-               uri.startsWith("/professor/atualizar/") ||
-               uri.startsWith("/professor/excluir/") ||
-               uri.equals("/tela/professor") ||
-               uri.equals("/tela/disciplina");
+    private boolean isCoordenaorRoute(String uri, String method) {
+        // Verifica rotas POST/PUT/DELETE de gerenciamento de professores
+        if (uri.equals("/professor/salvar") && "POST".equals(method)) return true;
+        if (uri.startsWith("/professor/atualizar/") && "PUT".equals(method)) return true;
+        if (uri.startsWith("/professor/excluir/") && "DELETE".equals(method)) return true;
+        
+        // Verifica páginas de gerenciamento
+        if (uri.equals("/tela/professor")) return true;
+        if (uri.equals("/tela/disciplina")) return true;
+        
+        return false;
     }
 }
