@@ -14,7 +14,4 @@ public class WebConfig implements WebMvcConfigurer {
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*");
     }
-    
-    // NÃO REGISTRE O SessionFilter AQUI
-    // O AuthorizationFilter já faz tudo que ele fazia
 }
