@@ -109,14 +109,20 @@ public class ProfessorService {
                         }
                     }
                     ////////////////////////////////////////////////
+
+
+                    
                     
                     pro.setNomeProfessor(dto.getNomeProfessor());
                     pro.setMatriProfessor(dto.getMatriProfessor());
                     pro.setEmailProfessor(dto.getEmailProfessor());
                     
                     // Criptografa a senha antes de atualizar
-                    String senhaCriptografada = passwordEncoder.encode(dto.getSenhaProfessor());
-                    pro.setSenhaProfessor(senhaCriptografada);
+                    if (dto.getSenhaProfessor() != null && !dto.getSenhaProfessor().isBlank()) {
+                            String senhaCriptografada = passwordEncoder.encode(dto.getSenhaProfessor());
+                            pro.setSenhaProfessor(senhaCriptografada);
+                    }
+                    
                     
                     pro.setTipoProfessor(dto.getTipoProfessor());
                     
