@@ -1,4 +1,3 @@
-
 // =============================
 // Seletores e Variáveis Globais
 // =============================
@@ -8,7 +7,11 @@ const idEmailProfessor = document.querySelector("#idEmailProfessor");
 const idSenhaProfessor = document.querySelector("#idSenhaProfessor");
 const idMatriProfessor = document.querySelector("#idMatriProfessor"); 
 const idTipoProfessor = document.querySelector("#idTipoProfessor");
-const tabelaBody = document.querySelector("#tableDisciplina tbody"); 
+const tabelaDisciplinaBody = document.querySelector("#tableDisciplina tbody");
+const tabelaProfessorBody = document.querySelector("#tableProfessor tbody");
+
+const modalEditar = document.getElementById("modalEditar");
+const editListaDisciplinas = document.getElementById("editListaDisciplinas");
 
 // Variável injetada pelo Thymeleaf
 const isCoordenador = typeof IS_COORDENADOR !== 'undefined' ? IS_COORDENADOR : false;
@@ -16,14 +19,21 @@ const isCoordenador = typeof IS_COORDENADOR !== 'undefined' ? IS_COORDENADOR : f
 console.log('👤 É coordenador?', isCoordenador);
 
 // =============================
-// LISTAR DISCIPLINAS
+// HELPERS
+// =============================
+function safeJsonParse(text) {
+    try { return JSON.parse(text); } catch(e) { return null; }
+}
+
+// =============================
+// LISTAR DISCIPLINAS (tabela principal)
 // =============================
 async function listarDisciplinas() {
     try {
-        const response = await fetch("/disciplina/list");
-        const disciplinas = await response.json();
-
-        tabelaBody.innerHTML = "";
+        const res = await fetch("/disciplina/list", { credentials: 'same-origin' });
+        if (!res.ok) throw new Error('Status ' + res.status);
+        const disciplinas = await res.json();
+        tabelaDisciplinaBody.innerHTML = "";
         disciplinas.forEach(d => {
             const linha = document.createElement("tr");
             linha.innerHTML = `
@@ -31,32 +41,30 @@ async function listarDisciplinas() {
                 <td>${d.nomeDisciplina}</td>
                 <td><input type="checkbox" class="check-disciplina" value="${d.idDisciplina}"></td>
             `;
-            tabelaBody.appendChild(linha);
+            tabelaDisciplinaBody.appendChild(linha);
         });
     } catch (err) {
         console.error("Erro ao listar disciplinas:", err);
+        tabelaDisciplinaBody.innerHTML = `<tr><td colspan="3">Erro ao carregar disciplinas</td></tr>`;
     }
 }
 
 // =============================
-// LISTAR PROFESSORES
+// LISTAR PROFESSORES (tabela principal)
 // =============================
 async function listarProfessores() {
     try {
-        const response = await fetch("/professor/list");
-        const professores = await response.json();
-
-        const tbody = document.querySelector("#tableProfessor tbody");
-        tbody.innerHTML = "";
+        const res = await fetch("/professor/list", { credentials: 'same-origin' });
+        if (!res.ok) throw new Error('Status ' + res.status);
+        const professores = await res.json();
+        tabelaProfessorBody.innerHTML = "";
 
         professores.forEach(p => {
             const tipoTexto = p.tipoProfessor === 1 ? "Coordenador" : "Professor";
-
             const actionsHtml = isCoordenador ? `
                 <button class="btn-editar" data-id="${p.idProfessor}">Editar</button>
                 <button class="btn-excluir" data-id="${p.idProfessor}">Excluir</button>
             ` : 'N/A';
-
             const linha = document.createElement("tr");
             linha.innerHTML = `
                 <td>${p.idProfessor}</td>
@@ -65,23 +73,19 @@ async function listarProfessores() {
                 <td>${tipoTexto}</td>
                 <td>${actionsHtml}</td>
             `;
-            tbody.appendChild(linha);
+            tabelaProfessorBody.appendChild(linha);
         });
-
     } catch (err) {
         console.error("Erro ao listar professores:", err);
+        tabelaProfessorBody.innerHTML = `<tr><td colspan="5">Erro ao carregar professores</td></tr>`;
     }
 }
 
 // =============================
-// SALVAR PROFESSOR
+// SALVAR PROFESSOR (novo) - inalterado exceto credentials
 // =============================
 function salvarProfessor() {
-    if (!isCoordenador) {
-        alert("Você não tem permissão.");
-        return;
-    }
-
+    if (!isCoordenador) { alert("Você não tem permissão."); return; }
     const professorDTO = {
         nomeProfessor: idNomeProfessor.value,
         emailProfessor: idEmailProfessor.value,
@@ -90,11 +94,15 @@ function salvarProfessor() {
         tipoProfessor: parseInt(idTipoProfessor.value),
         idsDisciplinas: [...document.querySelectorAll(".check-disciplina:checked")].map(c => parseInt(c.value))
     };
-
     fetch("/professor/salvar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: 'same-origin',
         body: JSON.stringify(professorDTO)
+    })
+    .then(res => {
+        if (!res.ok) throw new Error('Status ' + res.status);
+        return res.json();
     })
     .then(() => {
         alert("Professor cadastrado!");
@@ -107,12 +115,10 @@ function salvarProfessor() {
 // DELEGAÇÃO DE EVENTOS (EDITAR / EXCLUIR)
 // =============================
 document.addEventListener("click", function (event) {
-
     if (event.target.classList.contains("btn-editar")) {
         const id = event.target.dataset.id;
         abrirModalEdicao(id);
     }
-
     if (event.target.classList.contains("btn-excluir")) {
         const id = event.target.dataset.id;
         if (confirm("Deseja excluir este professor?")) {
@@ -122,73 +128,132 @@ document.addEventListener("click", function (event) {
 });
 
 // =============================
-// ABRIR MODAL DE EDIÇÃO
+// ABRIR MODAL DE EDIÇÃO - busca professor + disciplinas e marca checkboxes
 // =============================
-function abrirModalEdicao(id) {
-    fetch(`/professor/${id}`)
-        .then(res => res.json())
-        .then(p => {
-            document.getElementById("editIdProfessor").value = p.idProfessor;
-            document.getElementById("editNomeProfessor").value = p.nomeProfessor;
-            document.getElementById("editEmailProfessor").value = p.emailProfessor;
-            document.getElementById("editSenhaProfessor").value = "";
-            document.getElementById("editMatriProfessor").value = p.matriProfessor;
-            document.getElementById("editTipoProfessor").value = p.tipoProfessor;
+async function abrirModalEdicao(id) {
+    try {
+        console.log("Abrindo edição para id:", id);
 
-            document.getElementById("modalEditar").style.display = "flex";
-        })
-        .catch(err => console.error("Erro ao abrir edição:", err));
+        // Busca professor
+        const [resP, resD] = await Promise.all([
+            fetch(`/professor/${id}`, { credentials: 'same-origin' }),
+            fetch(`/disciplina/list`, { credentials: 'same-origin' })
+        ]);
+
+        if (!resP.ok) throw new Error('Erro ao buscar professor: ' + resP.status);
+        if (!resD.ok) throw new Error('Erro ao buscar disciplinas: ' + resD.status);
+
+        const professor = await resP.json();
+        const disciplinas = await resD.json();
+
+        // Preenche campos básicos
+        document.getElementById("editIdProfessor").value = professor.idProfessor;
+        document.getElementById("editNomeProfessor").value = professor.nomeProfessor;
+        document.getElementById("editEmailProfessor").value = professor.emailProfessor;
+        document.getElementById("editSenhaProfessor").value = "";
+        document.getElementById("editMatriProfessor").value = professor.matriProfessor;
+        document.getElementById("editTipoProfessor").value = professor.tipoProfessor;
+
+        // Renderiza lista de disciplinas com checkboxes marcados se atribuído
+        editListaDisciplinas.innerHTML = "";
+        const assignedIds = (professor.idsDisciplinas || []).map(Number);
+        disciplinas.forEach(d => {
+            const wrapper = document.createElement("div");
+            wrapper.className = "edit-disciplina-row";
+            const checked = assignedIds.includes(d.idDisciplina) ? "checked" : "";
+            wrapper.innerHTML = `
+                <label>
+                    <input type="checkbox" class="edit-check-disciplina" value="${d.idDisciplina}" ${checked}>
+                    ${d.nomeDisciplina}
+                </label>
+            `;
+            editListaDisciplinas.appendChild(wrapper);
+        });
+
+        // Exibe modal
+        modalEditar.style.display = "flex";
+
+    } catch (err) {
+        console.error("Erro ao abrir modal de edição:", err);
+        alert("Erro ao abrir edição: " + err.message);
+    }
 }
 
 // =============================
 // EXCLUIR PROFESSOR
 // =============================
-function excluirProfessor(id) {
-    fetch(`/professor/excluir/${id}`, { method: "DELETE" })
-        .then(() => {
-            alert("Professor excluído!");
-            listarProfessores();
-        })
-        .catch(err => console.error("Erro ao excluir:", err));
+async function excluirProfessor(id) {
+    try {
+        const res = await fetch(`/professor/excluir/${id}`, {
+            method: "DELETE",
+            credentials: 'same-origin'
+        });
+        if (!res.ok) throw new Error('Status ' + res.status);
+        alert("Professor excluído!");
+        listarProfessores();
+    } catch (err) {
+        console.error("Erro ao excluir:", err);
+        alert("Erro ao excluir professor");
+    }
 }
 
 // =============================
-// ATUALIZAR PROFESSOR
+// ATUALIZAR PROFESSOR - coleta disciplinas do modal e faz PUT
 // =============================
-document.getElementById("formEditarProfessor").addEventListener("submit", function (e) {
+document.getElementById("formEditarProfessor").addEventListener("submit", async function (e) {
     e.preventDefault();
 
-    const professorDTO = {
-        idProfessor: document.getElementById("editIdProfessor").value,
-        nomeProfessor: document.getElementById("editNomeProfessor").value,
-        emailProfessor: document.getElementById("editEmailProfessor").value,
-        senhaProfessor: document.getElementById("editSenhaProfessor").value,
-        matriProfessor: document.getElementById("editMatriProfessor").value,
-        tipoProfessor: document.getElementById("editTipoProfessor").value
-    };
+    try {
+        const idProfessor = document.getElementById("editIdProfessor").value;
+        const idsDisciplinas = [...document.querySelectorAll(".edit-check-disciplina:checked")].map(c => parseInt(c.value));
 
-    fetch("/professor/atualizar", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(professorDTO)
-    })
-    .then(() => {
+        const professorDTO = {
+            idProfessor: parseInt(idProfessor),
+            nomeProfessor: document.getElementById("editNomeProfessor").value,
+            emailProfessor: document.getElementById("editEmailProfessor").value,
+            senhaProfessor: document.getElementById("editSenhaProfessor").value,
+            matriProfessor: document.getElementById("editMatriProfessor").value,
+            tipoProfessor: parseInt(document.getElementById("editTipoProfessor").value),
+            idsDisciplinas: idsDisciplinas
+        };
+
+        console.log("Enviando atualização:", professorDTO);
+
+        const res = await fetch("/professor/atualizar", {
+            method: "PUT",
+            credentials: 'same-origin',
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(professorDTO)
+        });
+
+        console.log("Resposta PUT status:", res.status);
+
+        if (res.status === 405) {
+            // Caso você esteja vendo PUT -> /tela/login nos logs, possivelmente há um conflito de rota/rotina
+            throw new Error("Método PUT não suportado pelo endpoint. Verifique se /professor/atualizar existe e aceita PUT.");
+        }
+
+        if (!res.ok) throw new Error('Status ' + res.status);
+
         alert("Professor atualizado!");
-        document.getElementById("modalEditar").style.display = "none";
+        modalEditar.style.display = "none";
         listarProfessores();
-    })
-    .catch(err => console.error("Erro ao atualizar:", err));
+
+    } catch (err) {
+        console.error("Erro ao atualizar:", err);
+        alert("Erro ao atualizar professor: " + err.message);
+    }
 });
 
 // =============================
 // CANCELAR MODAL
 // =============================
 document.getElementById("btnCancelar").addEventListener("click", () => {
-    document.getElementById("modalEditar").style.display = "none";
+    modalEditar.style.display = "none";
 });
 
 // =============================
-// EVENTOS
+// EVENTOS DO FORMULARIO NOVO PROFESSOR
 // =============================
 if (formProfessor) {
     formProfessor.addEventListener("submit", function(e) {
