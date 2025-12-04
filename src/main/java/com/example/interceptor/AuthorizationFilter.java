@@ -29,12 +29,21 @@ public class AuthorizationFilter extends GenericFilter {
 
         // 2. Se o professor estiver logado na sessão, autentica no Spring Security
         if (professorLogado != null) {
-            // Define o TipoProfessor como a Role (Ex: "COORDENADOR" ou "PROFESSOR")
-            String tipo = professorLogado.getTipoProfessor().toUpperCase(); 
-            
+
+            byte tipoByte = professorLogado.getTipoProfessor();
+            String tipo;
+
+            if (tipoByte == 1) {
+            tipo = "COORDENADOR"; // Ou o valor de string correspondente a 1
+            } else if (tipoByte == 0) {
+            tipo = "PROFESSOR"; // Ou o valor de string correspondente a 0
+            } else {
+                // Caso de segurança para tipos não reconhecidos
+            tipo = "INVALIDO"; 
+            }
             // CONVENÇÃO DO SPRING SECURITY: A Role deve ter o prefixo "ROLE_"
             List<SimpleGrantedAuthority> authorities = Collections.singletonList(
-                new SimpleGrantedAuthority("ROLE_" + tipo)
+                new SimpleGrantedAuthority("ROLE_" + tipo.toUpperCase())
             );
 
             // Cria o objeto de autenticação do Spring Security
