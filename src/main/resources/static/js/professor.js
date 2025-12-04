@@ -24,12 +24,12 @@ console.log('===========================================');
 async function listarDisciplinas() {
     console.log('');
     console.log('📚 ========== INICIANDO LISTAGEM DE DISCIPLINAS ==========');
-    console.log('📍 URL da requisição: /disciplina/listar');
+    console.log('📍 URL da requisição: /disciplina/list');
     
     try {
         console.log('⏳ Fazendo requisição...');
         
-        const response = await fetch("/disciplina/listar", {
+        const response = await fetch("/disciplina/list", {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -120,12 +120,12 @@ async function listarDisciplinas() {
 async function listarProfessores() {
     console.log('');
     console.log('👥 ========== INICIANDO LISTAGEM DE PROFESSORES ==========');
-    console.log('📍 URL da requisição: /professor/listar');
+    console.log('📍 URL da requisição: /professor/list');
     
     try {
         console.log('⏳ Fazendo requisição...');
         
-        const response = await fetch("/professor/listar", {
+        const response = await fetch("/professor/list", {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -235,7 +235,7 @@ function salvarProfessor() {
     const tipo = parseInt(idTipoProfessor.value);
 
     if (tipo === 1) {
-        fetch("/disciplina/listar")
+        fetch("/disciplina/list")
             .then(res => {
                 if (!res.ok) throw new Error('Erro ao buscar disciplinas');
                 return res.json();
