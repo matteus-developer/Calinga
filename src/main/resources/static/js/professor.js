@@ -198,7 +198,7 @@ document.addEventListener("click", function (e) {
 });
 
 // =============================
-// ATUALIZAR PROFESSOR ✅ CORRIGIDO
+// ATUALIZAR PROFESSOR 
 // =============================
 document.querySelector("#btnAtualizar").addEventListener("click", function () {
 
@@ -218,8 +218,8 @@ document.querySelector("#btnAtualizar").addEventListener("click", function () {
     };
 
     if (senhaDigitada && senhaDigitada.trim() !== "") {
-    dto.senhaProfessor = senhaDigitada;
-}
+        dto.senhaProfessor = senhaDigitada;
+    }
 
     fetch(`/professor/atualizar/${id}`, {
         method: "PUT",
@@ -227,21 +227,21 @@ document.querySelector("#btnAtualizar").addEventListener("click", function () {
         body: JSON.stringify(dto)
     })
     .then(res => {
-    if (res.status === 200 || res.status === 204) {
-        alert("Professor atualizado!");
-        document.querySelector("#modalEditar").style.display = "none";
-        listarProfessores();
-    } else {
-        return res.text().then(msg => {
-            throw new Error(msg || "Erro ao atualizar");
-        });
-    }
-})
-.catch(err => {
-    console.error(err);
-    alert(err.message);
-});
-
+        if (res.status === 200 || res.status === 204) {
+            alert("Professor atualizado!");
+            document.querySelector("#modalEditar").style.display = "none";
+            listarProfessores();
+        } else {
+            return res.text().then(msg => {
+                throw new Error(msg || "Erro ao atualizar");
+            });
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        alert(err.message);
+    });
+}); 
 // =============================
 // EXCLUIR PROFESSOR
 // =============================
