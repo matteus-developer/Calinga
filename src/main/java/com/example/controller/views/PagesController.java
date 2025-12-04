@@ -27,7 +27,18 @@ public class PagesController {
     }
 
     @GetMapping("/tela/professor")
-    public String mostrarTelaProfessor() {
+    public String mostrarTelaProfessor(Authentication authentication, Model model) {
+        // Verifica se o usuário é COORDENADOR e passa a permissão para o Thymeleaf
+        boolean isCoordenador = false;
+        if (authentication != null) {
+            Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
+            isCoordenador = authorities.stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_COORDENADOR"));
+        }
+        // Adiciona a flag de permissão ao modelo
+        model.addAttribute("isCoordenador", isCoordenador);
+        // Mesmo que a URL /tela/professor esteja protegida no SecurityConfig, 
+        // a flag de permissão é usada no JS para controlar o que o Coordenador pode fazer
         return "htmlProfessor/professor"; 
     }
 
