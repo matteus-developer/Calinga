@@ -15,7 +15,6 @@ const tabelaBody = document.querySelector("#tableDisciplina tbody");
 function limparCamposProfessor() {
     idNomeProfessor.value = "";
     idEmailProfessor.value = "";
-    idSenhaProfessor.value = "";
     idMatriProfessor.value = "";
     idTipoProfessor.value = "";
     
@@ -208,7 +207,7 @@ document.addEventListener("click", function (e) {
                 document.querySelector("#editIdProfessor").value = professor.idProfessor;
                 document.querySelector("#editNomeProfessor").value = professor.nomeProfessor;
                 document.querySelector("#editEmailProfessor").value = professor.emailProfessor;
-                document.querySelector("#editSenhaProfessor").value = "";
+                document.querySelector("#editSenhaProfessor").value = professor.senhaProfessor
                 document.querySelector("#editMatriProfessor").value = professor.matriProfessor;
                 document.querySelector("#editTipoProfessor").value = professor.tipoProfessor;
 
